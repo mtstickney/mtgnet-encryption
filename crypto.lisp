@@ -1,18 +1,7 @@
 (defpackage #:mtgnet.crypto
   (:use #:cl)
-  ;; Wrappers for cl-sodium functions
-  (:export #:generichash-keybytes-min
-           #:generichash-keybytes-max
-           #:secretbox-noncebytes
-           #:scalarmult-bytes
-           #:secretbox-macbytes
-           #:secretbox-keybytes
-           #:box-publickey-bytes
-           #:box-secretkey-bytes
-           #:with-sodium-buffer
-           #:with-secret)
-  ;; mtgnet-specific functions
-  (:export #:+nonce-bytes+
+  (:export #:with-secret
+           #:+nonce-bytes+
            #:ecdh-session-key
            #:generate-secret-key
            #:generate-encoded-secret
