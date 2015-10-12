@@ -1,6 +1,7 @@
 (defpackage #:mtgnet.encryption
   (:use #:cl #:mtgnet.crypto)
-  (:export #:encrypted-rpc-connection))
+  (:export #:encrypted-rpc-connection
+           #:make-encrypted-connection))
 
 (in-package #:mtgnet.encryption)
 
@@ -21,6 +22,19 @@
   ;; shared nonce in a new buffer on {en,de}cryption.
   (setf (local-nonce con) (cffi:make-shareable-byte-vector +nonce-bytes+)
         (remote-nonce con) (cffi:make-shareable-byte-vector +nonce-bytes+)))
+
+(defun make-encrypted-connection (framer transport public-key secret-key &optional (authorized-keys '(t)))
+  (check-type framer mtgnet-sys:data-framer)
+  (check-type transport mtgnet-sys:transport)
+  (check-type public-key (vector (unsigned-byte 8)))
+  (check-type secret-key cffi:foreign-pointer)
+  (check-type authorized-keys list)
+  (make-instance 'encrypted-rpc-connection
+                 :framer framer
+                 :transport transport
+                 :public-key public-key
+                 :secret-key secret-key
+                 :authorized-keys authorized-keys))
 
 (defgeneric encrypt-data (con data)
   (:documentation "Encrypt DATA to send over CON. Returns a byte array
