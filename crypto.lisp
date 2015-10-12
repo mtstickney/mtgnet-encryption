@@ -123,7 +123,7 @@ keys."
             (%hash-key shared-secret (scalarmult-bytes)
                    nonce +nonce-bytes+)))))))
 
-(defun generate-secret-key ()
+(defun call-with-secret-buffer (thunk)
   (let* ((size-ptr (cr:crypto-box-secretkeybytes))
          (size (cffi:pointer-address size-ptr))
          (ptr (sodium-malloc size))
@@ -133,9 +133,17 @@ keys."
            (when (cffi:null-pointer-p ptr)
              (error "Unable to allocate secure memory for secret key."))
            (cr:randombytes-buf ptr size-ptr)
+           (funcall thunk ptr size-ptr)
            (sodium-mprotect-noaccess ptr)
-           (setf ok t)
-           ptr)
+           (setf ok t))
       (unless ok
         (sodium-free ptr)
-        (setf ptr (cffi:null-pointer))))))
+        (setf ptr (cffi:null-pointer))))
+    ptr))
+
+(defmacro with-new-secret-buffer ((ptr-var size-ptr-var) &body body)
+  `(call-with-secret-buffer (lambda (,ptr-var ,size-ptr-var) ,@body)))
+
+(defun generate-secret-key ()
+  (with-new-secret-buffer (ptr size-ptr)
+    (cr:randombytes-buf ptr size-ptr)))
