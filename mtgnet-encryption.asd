@@ -4,6 +4,7 @@
   :author "Matthew Stickney <mtstickney@gmail.com>"
   :license "MIT"
   :depends-on (#:cl-mtgnet
-               #:cl-sodium)
+               #:cl-sodium
+               #:base64)
   :components ((:file "crypto")
                (:file "encrypted-rpc")))

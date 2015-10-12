@@ -14,7 +14,10 @@
   ;; mtgnet-specific functions
   (:export #:+nonce-bytes+
            #:ecdh-session-key
-           #:generate-secret-key))
+           #:generate-secret-key
+           #:generate-encoded-secret
+           #:decode-secret-key
+           #:compute-public-key))
 
 (in-package #:mtgnet.crypto)
 
@@ -147,3 +150,39 @@ keys."
 (defun generate-secret-key ()
   (with-new-secret-buffer (ptr size-ptr)
     (cr:randombytes-buf ptr size-ptr)))
+
+(defun generate-encoded-secret ()
+  (let ((buf (cffi:make-shareable-byte-vector (box-secretkey-bytes))))
+    (cffi:with-pointer-to-vector-data (buf-ptr buf)
+      (cr:randombytes-buf buf-ptr (cr:crypto-box-secretkeybytes)))
+    (prog1 (base64:usb8-array-to-base64-string buf)
+      (loop for i from 0 to (1- (length buf))
+         ;; At least attempt to scrub intermediate data.
+         do (setf (aref buf i) 0)))))
+
+(defun decode-secret-key (encoded-key)
+  "Decode and return a new secret key from the base64-encoded string ENCODED-KEY."
+  (check-type encoded-key string)
+  (let ((data (base64:base64-string-to-usb8-array encoded-key)))
+    (with-new-secret-buffer (ptr size-ptr)
+      (unless (= (cffi:pointer-address size-ptr)
+                 (length data))
+        (error "Encoded key ~S (~S bytes) is not of the right size to be a secret key (expected ~S bytes)."
+               data
+               (length data)
+               (cffi:pointer-address size-ptr)))
+      (loop for byte across data
+         for i from 0
+         do (setf (cffi:mem-aref ptr :uchar i) byte
+                  ;; Clear the data in-memory. Imperfect protection,
+                  ;; but better than nothing.
+                  (aref data i) 0)))))
+
+(defun compute-public-key (secret-key)
+  (check-type secret-key cffi:foreign-pointer)
+  (assert (= (box-publickey-bytes) (scalarmult-bytes)) ())
+  (let ((public-key (cffi:make-shareable-byte-vector (scalarmult-bytes))))
+    (cffi:with-pointer-to-vector-data (public-key-ptr public-key)
+      (with-secret (secret-key)
+        (cr:crypto-scalarmult-base public-key-ptr secret-key)))
+    public-key))
