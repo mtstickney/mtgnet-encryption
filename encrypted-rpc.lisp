@@ -23,18 +23,20 @@
   (setf (local-nonce con) (cffi:make-shareable-byte-vector +nonce-bytes+)
         (remote-nonce con) (cffi:make-shareable-byte-vector +nonce-bytes+)))
 
-(defun make-encrypted-connection (framer transport public-key secret-key &optional (authorized-keys '(t)))
+(defun make-encrypted-connection (framer transport secret-key &optional (authorized-keys '(t)))
   (check-type framer mtgnet-sys:data-framer)
   (check-type transport mtgnet-sys:transport)
-  (check-type public-key (vector (unsigned-byte 8)))
-  (check-type secret-key cffi:foreign-pointer)
+  (check-type secret-key (or string cffi:foreign-pointer))
   (check-type authorized-keys list)
-  (make-instance 'encrypted-rpc-connection
-                 :framer framer
-                 :transport transport
-                 :public-key public-key
-                 :secret-key secret-key
-                 :authorized-keys authorized-keys))
+  (let ((secret (etypecase secret-key
+                  (string (decode-secret-key secret-key))
+                  (cffi:foreign-pointer secret-key))))
+    (make-instance 'encrypted-rpc-connection
+                   :framer framer
+                   :transport transport
+                   :public-key (compute-public-key secret)
+                   :secret-key secret
+                   :authorized-keys authorized-keys)))
 
 (defgeneric encrypt-data (con data)
   (:documentation "Encrypt DATA to send over CON. Returns a byte array
