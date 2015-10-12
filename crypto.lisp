@@ -1,5 +1,8 @@
 (defpackage #:mtgnet.crypto
   (:use #:cl)
+  ;; Wrappers for sodium functions
+  (:export #:box-publickey-bytes
+           #:secretbox-macbytes)
   (:export #:with-secret
            #:+nonce-bytes+
            #:ecdh-session-key
