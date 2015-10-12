@@ -110,6 +110,8 @@ is an augmented ECDH session key: the ECDH key is used to hash the
 XORed nonces, and the result is returned as the new key. This is
 designed to make the session key less durable even with fixed secret
 keys."
+  (check-type secret cffi:foreign-pointer)
+  (check-type public (vector (unsigned-byte 8)))
   (check-type our-nonce (vector (unsigned-byte 8) 24))
   (check-type their-nonce (vector (unsigned-byte 8) 24))
   ;; TODO: you'd get better performance (depending on the
