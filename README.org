@@ -14,7 +14,10 @@
   :       (connection (make-encrypted-connection framer transport secret)))
   :   ;; Use the connection as usual.
   :   (mtgnet:connect connection)
-  :   (mtgnet:invoke-rpc-method connection ...))
+  :   (mtgnet:invoke-rpc-method connection ...)
+  :   ...
+  :   ;; Secrets must be explicitly freed.
+  :   (mtgnet.crypto:free-secret connection))
   Once an =encrypted-rpc-connection= instance is created, it is a
   drop-in replacement for regular connection objects, except for the
   conditions it throws. General errors encrypting or decrypting data
@@ -81,6 +84,10 @@
     Same as =generate-secret-key=, except instead of returning a
     secret object, it returns a base64-encoded string. Useful for
     generating new keys for humans.
+
+*** free-secret
+    Secrets are foreign objects, and cannot be garbage-collected. They
+    must be explicitly freed by calling this function.
 
 *** decode-secret-key
     Takes a base64-encoded string of the secret data and returns a

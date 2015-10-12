@@ -5,6 +5,7 @@
            #:ecdh-session-key
            #:generate-secret-key
            #:generate-encoded-secret
+           #:free-secret
            #:decode-secret-key
            #:compute-public-key))
 
@@ -141,6 +142,10 @@ keys."
 (defun generate-secret-key ()
   (with-new-secret-buffer (ptr size-ptr)
     (cr:randombytes-buf ptr size-ptr)))
+
+(defun free-secret (secret)
+  (check-type secret cffi:foreign-pointer)
+  (sodium-free secret))
 
 (defun generate-encoded-secret ()
   (let ((buf (cffi:make-shareable-byte-vector (box-secretkey-bytes))))
