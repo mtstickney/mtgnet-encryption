@@ -5,6 +5,6 @@
   :license "MIT"
   :depends-on (#:cl-mtgnet
                #:cl-sodium
-               #:base64)
+               #:cl-base64)
   :components ((:file "crypto")
                (:file "encrypted-rpc")))
