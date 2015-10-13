@@ -187,9 +187,10 @@ remote nonce and public key as multiple values."
              (setf (session-key con) (generate-session-key con (secret-key con) key)))))
 
 (defmethod mtgnet-sys:connect :around ((con encrypted-rpc-connection))
-  (blackbird:multiple-promise-bind (socket) (call-next-method)
-    (perform-handshake con)
-    socket))
+  (blackbird:chain (call-next-method)
+    (:attach (socket)
+             (blackbird:chain (perform-handshake con)
+               (:attach () socket)))))
 
 (defmethod mtgnet-sys:send-response ((con encrypted-rpc-connection) response)
   (check-type response mtgnet-sys:rpc-response)
