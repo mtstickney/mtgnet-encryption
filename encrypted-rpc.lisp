@@ -1,10 +1,43 @@
 (defpackage #:mtgnet.encryption
   (:use #:cl #:mtgnet.crypto)
+  (:import-from #:mtgnet.crypto
+                #:free-secret)
+  (:export #:+secret-size+
+           #:+publickey-size+
+           #:free-secret
+           #:generate-secret
+           #:generate-encoded-secret
+           #:decode-secret-key
+           #:compute-public-key)
   (:export #:encrypted-rpc-connection
            #:make-encrypted-connection
            #:perform-handshake))
 
 (in-package #:mtgnet.encryption)
+
+(defconstant +secret-size+ (mtgnet.crypto:sign-secretkey-bytes))
+(defconstant +publickey-size+ (mtgnet.crypto:sign-publickey-bytes))
+
+(defun generate-secret ()
+  (mtgnet.crypto:generate-signing-secret))
+
+(defun generate-encoded-secret ()
+  (mtgnet.crypto:generate-encoded-signing-secret))
+
+(defun decode-secret-key (secret)
+  (check-type secret string)
+  (flet ((base64-length (byte-count)
+           (* 4 (ceiling byte-count 3))))
+    (unless (= (length secret)
+               (base64-length +secret-size+))
+      (error "Encoded key ~S (~S bytes) is not of the right size to be a secret key (expected ~S bytes)."
+             secret
+             (length secret)
+             (base64-length +secret-size+)))
+    (decode-secret secret)))
+
+(defun compute-public-key (secret)
+  (mtgnet.crypto:compute-signing-public-key secret))
 
 ;; Encrypting/decrypting connection for mtgnet.
 (defclass encrypted-rpc-connection (mtgnet-sys:rpc-connection)

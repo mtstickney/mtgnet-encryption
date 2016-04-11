@@ -22,7 +22,7 @@
            #:keypair-public
            #:generate-encoded-signing-secret
            #:free-secret
-           #:decode-secret-key
+           #:decode-secret
            #:signed-bytes
            #:invalid-signature-error
            #:extract-signed-bytes))
@@ -204,7 +204,7 @@ for use with WITH-SECRET, and the public key is a byte vector."
         (dotimes (i (length buf))
           (setf (aref buf i) 0))))))
 
-(defun decode-secret-key (encoded-key)
+(defun decode-secret (encoded-key)
   "Decode and return a new secret key from the base64-encoded string ENCODED-KEY."
   (check-type encoded-key string)
   (let* ((data (base64:base64-string-to-usb8-array encoded-key)))
