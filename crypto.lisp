@@ -195,14 +195,16 @@ for use with WITH-SECRET, and the public key is a byte vector."
 (defun generate-encoded-signing-secret ()
   (let ((buf (cffi:make-shareable-byte-vector (sign-secretkey-bytes)))
         (secret (generate-signing-secret)))
-    (with-secret (secret)
-      (dotimes (i (length buf))
-        (setf (aref buf i)
-              (cffi:mem-aref secret :uchar i)))
-      (prog1 (base64:usb8-array-to-base64-string buf)
-        ;; At least attempt to scrub intermediate data.
-        (dotimes (i (length buf))
-          (setf (aref buf i) 0))))))
+    (unwind-protect
+         (with-secret (secret)
+           (dotimes (i (length buf))
+             (setf (aref buf i)
+                   (cffi:mem-aref secret :uchar i)))
+           (prog1 (base64:usb8-array-to-base64-string buf)
+             ;; At least attempt to scrub intermediate data.
+             (dotimes (i (length buf))
+               (setf (aref buf i) 0))))
+      (free-secret secret))))
 
 (defun decode-secret (encoded-key)
   "Decode and return a new secret key from the base64-encoded string ENCODED-KEY."
