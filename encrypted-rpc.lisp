@@ -92,13 +92,13 @@
         ;; Generate a nonce to use for the encryption.
         (cr:randombytes-buf buf-ptr (cr:crypto-box-noncebytes))
         (with-secret (key)
-          (unless (= (crypto-box-easy-afternm output-ptr
+          (let ((res (crypto-box-easy-afternm output-ptr
                                               output-ptr
                                               (length data)
                                               buf-ptr
-                                              key)
-                     0)
-            (error "Error encrypting data.")))))
+                                              key)))
+            (unless (= res 0)
+              (error "Error encrypting data (code ~A)." res))))))
     buf))
 
 (defmethod decrypt-data ((con encrypted-rpc-connection) bytes)
@@ -118,14 +118,14 @@ the encrypted data."
             (key (session-key con)))
         (with-secret (key)
           ;; Decrtypt the data in-place.
-          (unless (= (crypto-box-open-easy-afternm data-ptr
+          (let ((res (crypto-box-open-easy-afternm data-ptr
                                                    data-ptr
                                                    (- (length bytes)
                                                       (box-noncebytes))
                                                    nonce-ptr
-                                                   key)
-                     0)
-            (error "Error decrypting data.")))))
+                                                   key)))
+            (unless (= res 0)
+              (error "Error decrypting data (code ~A)." res))))))
     ;; Mehhhh, more copying (need to ignore the nonce and any trailing
     ;; junk from decrypting in-place.
     (subseq bytes-buf
