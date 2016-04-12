@@ -79,7 +79,13 @@
   )
 
 (defun sodium-malloc (size)
-  (cr-sodium-malloc (cffi:make-pointer size)))
+  (let* ((word-size 8)
+         (aligned-size (* (ceiling size word-size) word-size)))
+    ;; Note: we're aligning to 8-byte boundaries for portability, but
+    ;; this wastes memory on 32-bit systems which only need a 4-byte
+    ;; boundary [only sort of -- sodium_malloc uses an extra 3-4
+    ;; /pages/ per allocation, so 8 bytes seems pretty trivial].
+    (cr-sodium-malloc (cffi:make-pointer aligned-size))))
 
 (cffi:defcfun ("sodium_free" #.(sodium::lispify "sodium_free" 'function)) :void
   (ptr :pointer))
