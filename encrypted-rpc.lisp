@@ -138,7 +138,8 @@ the encrypted data."
     (destroy-keypair! (ephemeral-keypair con))
     (setf (ephemeral-keypair con) nil))
   (when (session-key con)
-    (free-secret (session-key con))))
+    (free-secret (session-key con))
+    (setf (session-key con) nil)))
 
 (declaim (inline send-handshake-data))
 (defun send-handshake-data (con)
