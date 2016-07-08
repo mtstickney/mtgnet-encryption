@@ -133,7 +133,8 @@ the encrypted data."
             (- (length bytes)
                (box-macbytes)))))
 
-(defmethod mtgnet-sys:disconnect :before ((con encrypted-rpc-connection))
+(defmethod mtgnet-sys:disconnect :before ((con encrypted-rpc-connection) &key abort)
+  (declare (ignore abort))
   (when (ephemeral-keypair con)
     (destroy-keypair! (ephemeral-keypair con))
     (setf (ephemeral-keypair con) nil))
