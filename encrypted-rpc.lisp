@@ -11,6 +11,7 @@
            #:compute-public-key)
   (:export #:encrypted-rpc-connection
            #:make-encrypted-connection
+           #:remote-key
            #:perform-handshake))
 
 (in-package #:mtgnet.encryption)
@@ -45,7 +46,8 @@
    (public-key :initarg :public-key :accessor public-key)
    (ephemeral-keypair :initform nil :accessor ephemeral-keypair)
    (key :initform nil :accessor session-key)
-   (authorized-keys :initarg :authorized-keys :accessor authorized-keys))
+   (authorized-keys :initarg :authorized-keys :accessor authorized-keys)
+   (server-key :initform nil :accessor remote-key))
   (:default-initargs :authorized-keys '())
   (:documentation "An MTGNET connection class that encrypts data during transmission."))
 
@@ -140,7 +142,9 @@ the encrypted data."
     (setf (ephemeral-keypair con) nil))
   (when (session-key con)
     (free-secret (session-key con))
-    (setf (session-key con) nil)))
+    (setf (session-key con) nil))
+  (when (remote-key con)
+    (setf (remote-key con) nil)))
 
 (declaim (inline send-handshake-data))
 (defun send-handshake-data (con)
@@ -192,7 +196,8 @@ remote nonce and public key as multiple values."
                (error 'client-not-authorized :key signing-key))
              (setf (session-key con) (generate-session-key con
                                                            (keypair-secret (ephemeral-keypair con))
-                                                           key)))))
+                                                           key)
+                   (remote-key con) signing-key))))
 
 (defmethod mtgnet-sys:connect :around ((con encrypted-rpc-connection))
   (blackbird:chain (call-next-method)
